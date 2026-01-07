@@ -39,7 +39,25 @@ public class Team {
             players.add(player);
         }
     }
+    public Integer getPlayersGoals() {
+        if (players == null || players.isEmpty()) {
+            return 0;
+        }
 
+        int total = 0;
+        for (Player player : players) {
+            Integer goals = player.getGoalNb();
+            if (goals == null) {
+                throw new IllegalStateException(
+                        "Impossible de calculer le total de buts de l'équipe '" +
+                                name + "'. Le joueur '" + player.getName() +
+                                "' a un nombre de buts inconnu."
+                );
+            }
+            total += goals;
+        }
+        return total;
+    }
     public Integer getPlayerCount() {
         return players.size();
     }
