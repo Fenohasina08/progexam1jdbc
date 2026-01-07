@@ -9,13 +9,20 @@ public class Player {
     private final int age;
     private final PlayerPositionEnum position;
     private final Team team;
+    private final Integer goalNb; // Nouvel attribut
 
     public Player(Integer id, String name, int age, PlayerPositionEnum position, Team team) {
+        this(id, name, age, position, team, null); // Appelle le nouveau constructeur avec null par défaut
+    }
+
+    // Nouveau constructeur avec goalNb
+    public Player(Integer id, String name, int age, PlayerPositionEnum position, Team team, Integer goalNb) {
         this.id = id;
         this.name = name;
         this.age = age;
         this.position = position;
         this.team = team;
+        this.goalNb = goalNb;
     }
 
     public int getId() {
@@ -38,6 +45,11 @@ public class Player {
         return team;
     }
 
+    // Nouveau getter pour goalNb
+    public Integer getGoalNb() {
+        return goalNb;
+    }
+
     public String getTeamName() {
         return team != null ? team.getName() : "Aucune équipe";
     }
@@ -51,12 +63,13 @@ public class Player {
                 age == player.age &&
                 Objects.equals(name, player.name) &&
                 position == player.position &&
-                Objects.equals(team, player.team);
+                Objects.equals(team, player.team) &&
+                Objects.equals(goalNb, player.goalNb); // Ajout de goalNb
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, age, position, team);
+        return Objects.hash(id, name, age, position, team, goalNb); // Ajout de goalNb
     }
 
     @Override
@@ -67,6 +80,7 @@ public class Player {
                 ", age=" + age +
                 ", position=" + position +
                 ", team=" + (team != null ? team.getName() : "aucune") +
+                ", goalNb=" + goalNb + // Ajout de goalNb
                 '}';
     }
 }

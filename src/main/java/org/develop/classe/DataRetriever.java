@@ -9,13 +9,14 @@ public class DataRetriever {
     private final DBConnection dbConnection = new DBConnection();
 
     /* =========================
-       a) b) findTeamById
+       a) b) findTeamById - MODIFIÉ
        ========================= */
     public Team findTeamById(Integer id) {
         if (id == null) return null;
 
         String sqlTeam = "SELECT id, name, continent FROM team WHERE id = ?";
-        String sqlPlayers = "SELECT id, name, age, position FROM player WHERE id_team = ?";
+        // Ajout de goal_nb dans la requête
+        String sqlPlayers = "SELECT id, name, age, position, goal_nb FROM player WHERE id_team = ?";
 
         try (Connection conn = dbConnection.getConnection()) {
 
@@ -38,12 +39,14 @@ public class DataRetriever {
                 ps.setInt(1, id);
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
+                    // Ajout de goalNb dans la création du Player
                     team.addPlayer(new Player(
                             rs.getInt("id"),
                             rs.getString("name"),
                             rs.getInt("age"),
                             PlayerPositionEnum.valueOf(rs.getString("position")),
-                            team
+                            team,
+                            rs.getObject("goal_nb") != null ? rs.getInt("goal_nb") : null
                     ));
                 }
             }
@@ -55,11 +58,12 @@ public class DataRetriever {
     }
 
     /* =========================
-       c) d) findPlayers
+       c) d) findPlayers - MODIFIÉ
        ========================= */
     public List<Player> findPlayers(int page, int size) {
+        // Ajout de goal_nb dans la requête
         String sql = """
-                SELECT p.id, p.name, p.age, p.position, p.id_team,
+                SELECT p.id, p.name, p.age, p.position, p.id_team, p.goal_nb,
                        t.name AS team_name, t.continent
                 FROM player p
                 LEFT JOIN team t ON p.id_team = t.id
@@ -81,7 +85,7 @@ public class DataRetriever {
     }
 
     /* =========================
-       e) findTeamsByPlayerName
+       e) findTeamsByPlayerName - NON MODIFIÉ
        ========================= */
     public List<Team> findTeamsByPlayerName(String playerName) {
         if (playerName == null || playerName.isBlank()) return List.of();
@@ -116,7 +120,7 @@ public class DataRetriever {
     }
 
     /* =========================
-       f) findPlayersByCriteria
+       f) findPlayersByCriteria - MODIFIÉ
        ========================= */
     public List<Player> findPlayersByCriteria(
             String playerName,
@@ -126,8 +130,9 @@ public class DataRetriever {
             int page,
             int size
     ) {
+        // Ajout de goal_nb dans la requête
         StringBuilder sql = new StringBuilder("""
-                SELECT p.id, p.name, p.age, p.position, p.id_team,
+                SELECT p.id, p.name, p.age, p.position, p.id_team, p.goal_nb,
                        t.name AS team_name, t.continent
                 FROM player p
                 LEFT JOIN team t ON p.id_team = t.id
@@ -171,7 +176,7 @@ public class DataRetriever {
     }
 
     /* =========================
-       g) h) createPlayers
+       g) h) createPlayers - MODIFIÉ
        ========================= */
     public List<Player> createPlayers(List<Player> players) {
         for (Player p : players) {
@@ -181,9 +186,10 @@ public class DataRetriever {
             }
         }
 
+        // Ajout de goal_nb dans l'INSERT
         String sql = """
-                INSERT INTO player (id, name, age, position, id_team)
-                VALUES (?, ?, ?, ?::position_enum, ?)
+                INSERT INTO player (id, name, age, position, id_team, goal_nb)
+                VALUES (?, ?, ?, ?::position_enum, ?, ?)
                 """;
 
         try (Connection conn = dbConnection.getConnection();
@@ -195,6 +201,7 @@ public class DataRetriever {
                 ps.setInt(3, p.getAge());
                 ps.setString(4, p.getPosition().name());
                 ps.setObject(5, null);
+                ps.setObject(6, p.getGoalNb()); // Ajout du goal_nb
                 ps.executeUpdate();
             }
             return players;
@@ -205,7 +212,7 @@ public class DataRetriever {
     }
 
     /* =========================
-       i) j) saveTeam
+       i) j) saveTeam - MODIFIÉ
        ========================= */
     public Team saveTeam(Team team) {
         try (Connection conn = dbConnection.getConnection()) {
@@ -218,9 +225,10 @@ public class DataRetriever {
                     ps.executeUpdate();
                 }
             } else {
+                // Ajout de goal_nb dans l'INSERT
                 String sql = """
-                        INSERT INTO player (id, name, age, position, id_team)
-                        VALUES (?, ?, ?, ?::position_enum, ?)
+                        INSERT INTO player (id, name, age, position, id_team, goal_nb)
+                        VALUES (?, ?, ?, ?::position_enum, ?, ?)
                         """;
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     for (Player p : team.getPlayers()) {
@@ -229,6 +237,7 @@ public class DataRetriever {
                         ps.setInt(3, p.getAge());
                         ps.setString(4, p.getPosition().name());
                         ps.setInt(5, team.getId());
+                        ps.setObject(6, p.getGoalNb()); // Ajout du goal_nb
                         ps.executeUpdate();
                     }
                 }
@@ -242,7 +251,7 @@ public class DataRetriever {
     }
 
     /* =========================
-       UTILITAIRE
+       UTILITAIRE - MODIFIÉ
        ========================= */
     private List<Player> mapPlayers(PreparedStatement ps) throws SQLException {
         ResultSet rs = ps.executeQuery();
@@ -257,12 +266,14 @@ public class DataRetriever {
                         ContinentEnum.valueOf(rs.getString("continent"))
                 );
             }
+            // Ajout de goalNb dans la création du Player
             players.add(new Player(
                     rs.getInt("id"),
                     rs.getString("name"),
                     rs.getInt("age"),
                     PlayerPositionEnum.valueOf(rs.getString("position")),
-                    team
+                    team,
+                    rs.getObject("goal_nb") != null ? rs.getInt("goal_nb") : null
             ));
         }
         return players;
